@@ -1,0 +1,13 @@
+{
+  "name": "qwen-fishing-game",
+  "version": "1.0.0",
+  "description": "Qwen Fishing Game Deployment",
+  "scripts": {
+    "start": "npx serve .",
+    "deploy": "npx wrangler publish",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["game", "fishing", "html5", "javascript"],
+  "author": "Qwen Developer",
+  "license": "MIT"
+}

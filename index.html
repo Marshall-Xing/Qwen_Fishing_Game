@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qwen Fishing Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #e0f0ff;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            background: linear-gradient(to bottom, #e0f0ff 0%, #e0f0ff 70%, #a0d0f0 70%, #a0d0f0 100%);
+            border: 4px solid #333;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #character {
+            position: absolute;
+            left: 0;
+            bottom: 160px;
+            width: 32px;
+            height: 48px;
+            z-index: 10;
+            transform: translateX(50px);
+            will-change: transform;
+        }
+
+        #character::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle at 14px 10px, #333 0%, #333 3px, transparent 4px),
+                        radial-gradient(circle at 6px 10px, #333 0%, #333 3px, transparent 4px),
+                        radial-gradient(ellipse at 10px 16px, #333 0%, #333 4px, transparent 5px),
+                        radial-gradient(circle at 14px 6px, #333 0%, #333 2px, transparent 3px),
+                        radial-gradient(circle at 6px 6px, #333 0%, #333 2px, transparent 3px);
+            border: 1px solid #333;
+            border-radius: 50% 50% 40% 40%;
+            top: 4px;
+            left: 6px;
+        }
+
+        #character::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 25px;
+            background: linear-gradient(45deg, transparent 40%, #5d4e3f 45%, #5d4e3f 55%, transparent 60%),
+                        linear-gradient(135deg, transparent 40%, #5d4e3f 45%, #5d4e3f 55%, transparent 60%);
+            background-size: 4px 4px;
+            border: 1px solid #5d4e3f;
+            border-radius: 50% 50% 0 0;
+            top: 20px;
+            left: 4px;
+        }
+
+        #character .hat {
+            position: absolute;
+            width: 28px;
+            height: 10px;
+            background-color: #8b4513;
+            border-radius: 50% 50% 0 0;
+            top: 0;
+            left: 2px;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.3);
+        }
+
+        #character .body {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(45deg, transparent 45%, #5d4e3f 50%, #5d4e3f 55%, transparent 60%),
+                        linear-gradient(135deg, transparent 45%, #5d4e3f 50%, #5d4e3f 55%, transparent 60%);
+            background-size: 4px 4px;
+            border: 1px solid #5d4e3f;
+            border-radius: 5px;
+            top: 24px;
+            left: 6px;
+        }
+
+        #character .arm {
+            position: absolute;
+            width: 4px;
+            height: 16px;
+            background-color: #333;
+            border-radius: 2px;
+            top: 26px;
+        }
+
+        #character .arm.left {
+            left: 4px;
+            transform: rotate(30deg);
+        }
+
+        #character .arm.right {
+            right: 4px;
+            transform: rotate(-60deg);
+        }
+
+        #character .leg {
+            position: absolute;
+            width: 4px;
+            height: 12px;
+            background-color: #333;
+            border-radius: 2px;
+            top: 44px;
+        }
+
+        #character .leg.left {
+            left: 10px;
+        }
+
+        #character .leg.right {
+            right: 10px;
+        }
+
+        #platform {
+            position: absolute;
+            left: 30px;
+            bottom: 140px;
+            width: 120px;
+            height: 8px;
+            background-color: #8B4513;
+            border: 1px solid #000;
+            z-index: 9;
+        }
+
+        #fishing-line {
+            position: absolute;
+            width: 1px;
+            height: 0px;
+            background-color: #FFF;
+            top: 310px;
+            left: 0;
+            transform-origin: top center;
+            z-index: 9;
+            transform: translateX(88px) rotate(45deg);
+            will-change: transform;
+        }
+
+        #fishing-hook {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            z-index: 12;
+            will-change: transform;
+        }
+
+        #fishing-hook::before {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #000;
+            clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+            transform: rotate(45deg);
+        }
+
+        .hook-trail {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: rgba(192, 192, 192, 0.6);
+            border-radius: 50%;
+            z-index: 8;
+            pointer-events: none;
+        }
+
+        #pond {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 120px;
+            background-color: #80b0e0;
+            z-index: 1;
+        }
+
+        .water-surface {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 10px;
+            background: repeating-linear-gradient(
+                90deg,
+                #80b0e0,
+                #80b0e0 10px,
+                #70a0d0 10px,
+                #70a0d0 20px
+            );
+            animation: wave-animation 2s linear infinite;
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.3));
+        }
+
+        @keyframes wave-animation {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 0; }
+        }
+
+        .splash {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 6;
+            opacity: 0;
+        }
+
+        .character-item {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: #FFF;
+            text-shadow: 1px 1px 0 #000;
+            z-index: 5;
+            box-shadow: 0 0 0 1px #000;
+            border-radius: 3px;
+            transform: translateX(-24px);
+            will-change: transform;
+        }
+
+        .character-item.plus-word {
+            width: 80px;
+            font-size: 14px;
+        }
+
+        #ui-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #FFF;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 20;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        #title {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: #FFF;
+            text-shadow: 2px 2px 0 #000, 0 0 10px #ff8c00;
+            z-index: 20;
+            font-size: 24px;
+            font-weight: bold;
+            animation: title-glow 2s infinite alternate;
+        }
+
+        #countdown {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #FFF;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 20;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        @keyframes title-glow {
+            0% { text-shadow: 2px 2px 0 #000, 0 0 10px #ff8c00; }
+            100% { text-shadow: 2px 2px 0 #000, 0 0 20px #ff4500, 0 0 30px #ff4500; }
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: #FFF;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 20;
+            font-size: 16px;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        #movement-instructions {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #FFF;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 20;
+            font-size: 16px;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        #collected-sequence {
+            margin-bottom: 5px;
+        }
+
+        #character-pool {
+            margin-bottom: 5px;
+        }
+
+        #win-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 4px solid #FFF;
+            text-align: center;
+            color: #FFF;
+            display: none;
+            z-index: 30;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+            animation: popup-appear 0.5s ease-out;
+        }
+
+        @keyframes popup-appear {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .pixel-button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            background-color: #7CFC00;
+            border: 2px solid #000;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 #000;
+        }
+
+        .mountains {
+            position: absolute;
+            bottom: 120px;
+            width: 100%;
+            height: 100px;
+            z-index: 4;
+        }
+
+        .mountain {
+            position: absolute;
+            bottom: 0;
+            border-left: 50px solid transparent;
+            border-right: 50px solid transparent;
+            border-bottom: 100px solid #5d8aa8;
+        }
+
+        .mountain:first-child {
+            left: 50px;
+            border-bottom-color: #3a6ea5;
+        }
+
+        .mountain:nth-child(2) {
+            left: 200px;
+            height: 80px;
+            border-left-width: 40px;
+            border-right-width: 40px;
+            border-bottom: 80px solid #4d7a99;
+        }
+
+        .mountain:nth-child(3) {
+            left: 350px;
+            height: 60px;
+            border-left-width: 30px;
+            border-right-width: 30px;
+            border-bottom: 60px solid #5d8aa8;
+        }
+
+        .mountain:nth-child(4) {
+            left: 500px;
+            height: 90px;
+            border-left-width: 45px;
+            border-right-width: 45px;
+            border-bottom: 90px solid #4d7a99;
+        }
+
+        .sunset {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #ff8c00, #ff4500);
+            border-radius: 50%;
+            bottom: 140px;
+            left: 300px;
+            z-index: 3;
+            box-shadow: 0 0 40px #ff4500;
+        }
+
+        #sword {
+            position: absolute;
+            left: 0;
+            bottom: 140px;
+            width: 120px;
+            height: 8px;
+            background: linear-gradient(to right, #c0c0c0, #fff, #c0c0c0);
+            border: 1px solid #000;
+            z-index: 9;
+            border-radius: 4px;
+            transform: translateX(30px);
+            will-change: transform;
+        }
+
+        #sword::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 10px;
+            background-color: #8b4513;
+            border: 1px solid #000;
+            left: -10px;
+            top: -1px;
+            border-radius: 3px;
+        }
+
+        #sword::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -2px;
+            width: 0;
+            height: 0;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            border-left: 10px solid #c0c0c0;
+        }
+
+        .guard {
+            position: absolute;
+            width: 20px;
+            height: 4px;
+            background: linear-gradient(to right, #c0c0c0, #fff, #c0c0c0);
+            top: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 1px solid #000;
+            border-radius: 2px;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div class="mountains">
+            <div class="mountain"></div>
+            <div class="mountain"></div>
+            <div class="mountain"></div>
+            <div class="mountain"></div>
+        </div>
+        
+        <div class="sunset"></div>
+
+        <div id="sword">
+            <div class="blade-edge"></div>
+            <div class="guard"></div>
+        </div>
+        
+        <div id="character">
+            <div class="hat"></div>
+            <div class="body"></div>
+            <div class="arm left"></div>
+            <div class="arm right"></div>
+            <div class="leg left"></div>
+            <div class="leg right"></div>
+        </div>
+
+        <div id="fishing-line"></div>
+        <div id="fishing-hook"></div>
+
+        <div id="pond">
+            <div class="water-surface"></div>
+        </div>
+
+        <div id="title">QWEN3</div>
+        
+        <div id="countdown">3:00</div>
+        
+        <div id="instructions">按 F 键开始 Fishing</div>
+        <div id="movement-instructions">按<- ->移动</div>
+
+        <div id="ui-container">
+            <div id="collected-sequence">Collected: </div>
+            <div id="character-pool">CHARACTERS: A-Z, 0-9</div>
+        </div>
+
+        <div id="win-popup">
+            <div>YOU WON! ALL QWEN3 CHARACTERS CAUGHT!</div>
+            <button class="pixel-button" onclick="resetGame()">Press R to Reset</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏类
+        class FishingGame {
+            constructor() {
+                // 游戏状态
+                this.gameState = {
+                    targetSequence: "QWEN3",
+                    currentSequence: "",
+                    characters: [],
+                    gameRunning: true,
+                    lastCastTime: 0,
+                    castCooldown: 1000,
+                    isCasting: false,
+                    caughtCharacters: [],
+                    gameTimer: null,
+                    gameTime: 0,
+                    characterPosition: 50,
+                    characterSpeed: 2.6 * 1.5,
+                    collectedLetters: new Set()
+                };
+
+                // DOM元素
+                this.gameContainer = document.getElementById('game-container');
+                this.fishingLine = document.getElementById('fishing-line');
+                this.fishingHook = document.getElementById('fishing-hook');
+                this.collectedSequenceEl = document.getElementById('collected-sequence');
+                this.winPopup = document.getElementById('win-popup');
+                this.character = document.getElementById('character');
+                this.sword = document.getElementById('sword');
+                this.countdownEl = document.getElementById('countdown');
+
+                // 音效
+                this.castSound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+                this.catchSound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+                this.winSound = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==");
+
+                // 粒子系统
+                this.particles = [];
+
+                this.init();
+            }
+
+            init() {
+                this.initGame();
+                this.setupEventListeners();
+            }
+
+            initGame() {
+                this.gameState.currentSequence = "";
+                this.gameState.characters = [];
+                this.gameState.gameRunning = true;
+                this.gameState.isCasting = false;
+                this.gameState.caughtCharacters = [];
+                this.gameState.gameTime = 0;
+                this.gameState.characterPosition = 50;
+                this.gameState.collectedLetters = new Set();
+                this.updateCharacterPosition();
+                this.winPopup.style.display = 'none';
+                this.countdownEl.textContent = "3:00";
+                this.fishingLine.style.display = 'none';
+                this.fishingHook.style.display = 'block'; // 确保初始可见
+                this.updateUI();
+
+                document.querySelectorAll('.character-item').forEach(el => el.remove());
+
+                setInterval(() => this.spawnCharacter(), 2000);
+
+                if (this.gameState.gameTimer) {
+                    clearInterval(this.gameState.gameTimer);
+                }
+                this.gameState.gameTimer = setInterval(() => {
+                    this.gameState.gameTime++;
+                    if (this.gameState.gameTime >= 180) {
+                        this.resetGame();
+                    }
+                    this.updateUI();
+                }, 1000);
+
+                this.gameLoop();
+            }
+
+            updateCharacterPosition() {
+                this.character.style.transform = `translateX(${this.gameState.characterPosition}px)`;
+                this.sword.style.transform = `translateX(${this.gameState.characterPosition - 20}px)`;
+                
+                // 更新鱼线和鱼钩位置（从角色手中出发）
+                this.fishingLine.style.transform = `translateX(${this.gameState.characterPosition + 28}px) rotate(45deg)`;
+                
+                // 如果鱼线未显示，保持鱼钩在角色手边
+                if (this.fishingLine.style.display === 'none') {
+                    this.fishingHook.style.transform = `translate(${this.gameState.characterPosition + 28}px, 310px)`;
+                }
+            }
+
+            spawnCharacter() {
+                if (!this.gameState.gameRunning) return;
+
+                const chars = 'QQQQQQQQQQQQQQQQQQQQWWWWWWWWWWWWWWWWWWWWEEEEEEEEEENNNNNNNN3333333333';
+                const char = chars[Math.floor(Math.random() * chars.length)];
+
+                const charElement = document.createElement('div');
+                charElement.className = 'character-item';
+                charElement.textContent = char;
+                charElement.style.transform = 'translateX(-24px)';
+                charElement.style.bottom = (20 + Math.random() * 80) + 'px'; // 在水中
+                charElement.style.backgroundColor = this.getRandomColor();
+
+                const charId = 'char-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+                charElement.id = charId;
+
+                this.gameContainer.appendChild(charElement);
+
+                this.gameState.characters.push({
+                    id: charId,
+                    element: charElement,
+                    char: char,
+                    x: -24,
+                    speed: (30 + Math.random() * 20) * 1.5
+                });
+            }
+
+            getRandomColor() {
+                const colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            gameLoop() {
+                if (!this.gameState.gameRunning) return;
+
+                // 更新字符位置
+                for (let i = this.gameState.characters.length - 1; i >= 0; i--) {
+                    const charObj = this.gameState.characters[i];
+                    charObj.x += charObj.speed * (16 / 1000);
+
+                    if (charObj.element) {
+                        charObj.element.style.transform = `translateX(${charObj.x}px)`;
+
+                        if (charObj.x > this.gameContainer.offsetWidth) {
+                            charObj.element.remove();
+                            this.gameState.characters.splice(i, 1);
+                        }
+                    }
+                }
+
+                // 更新被钓到的字符位置
+                for (let i = 0; i < this.gameState.caughtCharacters.length; i++) {
+                    const caughtChar = this.gameState.caughtCharacters[i];
+                    if (caughtChar.element && caughtChar.hooked) {
+                        const hookRect = this.fishingHook.getBoundingClientRect();
+                        const containerRect = this.gameContainer.getBoundingClientRect();
+                        const hookX = hookRect.left - containerRect.left;
+                        const hookY = hookRect.top - containerRect.top;
+                        
+                        caughtChar.element.style.transform = `translate(${hookX + 4 - 12}px, ${hookY + 8}px)`;
+                    }
+                }
+
+                // 更新粒子
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const particle = this.particles[i];
+                    particle.life--;
+                    
+                    if (particle.life <= 0) {
+                        particle.element.remove();
+                        this.particles.splice(i, 1);
+                    } else {
+                        particle.y -= particle.speed;
+                        particle.x += (Math.random() - 0.5) * 2;
+                        particle.element.style.transform = `translate(${particle.x}px, ${particle.y}px)`;
+                        particle.element.style.opacity = particle.life / particle.maxLife;
+                    }
+                }
+
+                this.updateUI();
+
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            createParticles(x, y, color) {
+                const particleCount = 20;
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.style.position = 'absolute';
+                    particle.style.width = '4px';
+                    particle.style.height = '4px';
+                    particle.style.backgroundColor = color;
+                    particle.style.borderRadius = '50%';
+                    particle.style.pointerEvents = 'none';
+                    particle.style.zIndex = '15';
+                    particle.style.left = x + 'px';
+                    particle.style.top = y + 'px';
+                    
+                    this.gameContainer.appendChild(particle);
+                    
+                    this.particles.push({
+                        element: particle,
+                        x: x,
+                        y: y,
+                        speed: Math.random() * 3 + 1,
+                        life: 30,
+                        maxLife: 30
+                    });
+                }
+            }
+
+            createSplash(x, y) {
+                for (let i = 0; i < 5; i++) {
+                    const splash = document.createElement('div');
+                    splash.className = 'splash';
+                    splash.style.left = (x - 10 + Math.random() * 20) + 'px';
+                    splash.style.top = (y - 10 + Math.random() * 20) + 'px';
+                    splash.style.width = (10 + Math.random() * 20) + 'px';
+                    splash.style.height = (10 + Math.random() * 20) + 'px';
+                    splash.style.opacity = '0.8';
+                    
+                    this.gameContainer.appendChild(splash);
+                    
+                    const animation = splash.animate([
+                        { transform: 'scale(0)', opacity: 0.8 },
+                        { transform: 'scale(1.5)', opacity: 0 }
+                    ], {
+                        duration: 500 + Math.random() * 500,
+                        easing: 'ease-out'
+                    });
+                    
+                    animation.onfinish = () => splash.remove();
+                }
+            }
+            
+            createHookTrail(x, y) {
+                const trail = document.createElement('div');
+                trail.className = 'hook-trail';
+                trail.style.left = (x - 2) + 'px';
+                trail.style.top = (y - 2) + 'px';
+                
+                this.gameContainer.appendChild(trail);
+                
+                setTimeout(() => {
+                    trail.style.transition = 'opacity 1s';
+                    trail.style.opacity = '0';
+                    setTimeout(() => {
+                        if (trail.parentNode) {
+                            trail.remove();
+                        }
+                    }, 1000);
+                }, 2000);
+            }
+
+            // 检查鱼钩与字符的碰撞
+            checkCollision(hookX, hookY) {
+                // 遍历所有字符检查碰撞
+                for (let i = this.gameState.characters.length - 1; i >= 0; i--) {
+                    const charObj = this.gameState.characters[i];
+                    if (!charObj.element) continue;
+                    
+                    const charRect = charObj.element.getBoundingClientRect();
+                    const containerRect = this.gameContainer.getBoundingClientRect();
+                    const charX = charRect.left - containerRect.left + 12; // 字符中心点X
+                    const charY = charRect.top - containerRect.top + 12; // 字符中心点Y
+                    
+                    // 计算距离
+                    const distance = Math.sqrt(
+                        Math.pow(charX - hookX, 2) + 
+                        Math.pow(charY - hookY, 2)
+                    );
+                    
+                    // 如果距离小于阈值，认为发生碰撞
+                    if (distance < 20) {
+                        // 将字符标记为被钩住
+                        charObj.hooked = true;
+                        this.gameState.caughtCharacters.push(charObj);
+                        this.gameState.characters.splice(i, 1);
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            castFishingRod() {
+                const now = Date.now();
+                if (now - this.gameState.lastCastTime < this.gameState.castCooldown || this.gameState.isCasting) return;
+
+                this.gameState.isCasting = true;
+                this.gameState.lastCastTime = now;
+
+                this.castSound.currentTime = 0;
+                this.castSound.play().catch(e => console.log("Audio play error:", e));
+
+                this.fishingLine.style.display = 'block';
+                this.fishingHook.style.display = 'block'; // 确保可见
+
+                // 确保鱼线角度为45度（从角色手中出发）
+                this.fishingLine.style.transform = `translateX(${this.gameState.characterPosition + 28}px) rotate(45deg)`;
+                this.fishingLine.style.transformOrigin = 'top center';
+                
+                let lineLength = 0;
+                // 增加鱼线长度，确保鱼钩能到达水底
+                const maxLineLength = 400;
+                const lineSpeed = 4 * 1.5;
+                let splashCreated = false;
+
+                // 鱼线延长动画（鱼钩向下移动）
+                const extendLine = () => {
+                    if (lineLength < maxLineLength) {
+                        lineLength += lineSpeed;
+                        // 45度角计算鱼钩位置（从角色手中开始）
+                        const angle = 45 * Math.PI / 180;
+                        const hookX = this.gameState.characterPosition + 28 + lineLength * Math.cos(angle);
+                        const hookY = 310 + lineLength * Math.sin(angle);
+                        this.fishingHook.style.transform = `translate(${hookX - 6}px, ${hookY - 6}px)`;
+                        
+                        // 当鱼钩接触到水面时创建水花
+                        if (hookY >= 360 && !splashCreated) {
+                            this.createSplash(hookX, 360);
+                            splashCreated = true;
+                        }
+                        
+                        // 创建轨迹
+                        if (Math.floor(lineLength / 20) !== Math.floor((lineLength - lineSpeed) / 20)) {
+                            this.createHookTrail(hookX, hookY);
+                        }
+                        
+                        // 持续检查碰撞
+                        this.checkCollision(hookX, hookY);
+                        
+                        // 确保鱼钩可见
+                        this.fishingHook.style.display = 'block';
+                        
+                        requestAnimationFrame(extendLine);
+                    } else {
+                        // 到达最大长度后短暂停留再收回
+                        setTimeout(retractLine, 500);
+                    }
+                };
+
+                // 鱼线收回动画（鱼钩向上移动）
+                const retractLine = () => {
+                    if (lineLength > 0) {
+                        lineLength -= lineSpeed;
+                        // 45度角计算鱼钩位置
+                        const angle = 45 * Math.PI / 180;
+                        const hookX = this.gameState.characterPosition + 28 + lineLength * Math.cos(angle);
+                        const hookY = 310 + lineLength * Math.sin(angle);
+                        this.fishingHook.style.transform = `translate(${hookX - 6}px, ${hookY - 6}px)`;
+
+                        // 创建轨迹
+                        if (Math.floor(lineLength / 20) !== Math.floor((lineLength + lineSpeed) / 20)) {
+                            this.createHookTrail(hookX, hookY);
+                        }
+                        
+                        // 持续检查碰撞
+                        this.checkCollision(hookX, hookY);
+                        
+                        // 确保鱼钩可见
+                        this.fishingHook.style.display = 'block';
+
+                        // 更新被钓到的字符位置
+                        for (let i = 0; i < this.gameState.caughtCharacters.length; i++) {
+                            const caughtChar = this.gameState.caughtCharacters[i];
+                            if (caughtChar.element && caughtChar.hooked) {
+                                caughtChar.element.style.transform = `translate(${hookX - 12}px, ${hookY - 12}px)`;
+                                
+                                // 当鱼钩接近顶部时处理字符
+                                if (lineLength < 20) {
+                                    if (this.gameState.targetSequence.includes(caughtChar.char)) {
+                                        this.gameState.collectedLetters.add(caughtChar.char);
+                                        this.catchSound.currentTime = 0;
+                                        this.catchSound.play().catch(e => console.log("Audio play error:", e));
+                                        const color = caughtChar.element.style.backgroundColor;
+                                        this.createParticles(hookX, hookY, color);
+                                        caughtChar.element.remove();
+                                        this.gameState.caughtCharacters.splice(i, 1);
+                                        this.updateUI();
+                                        
+                                        if (this.gameState.collectedLetters.size === this.gameState.targetSequence.length) {
+                                            this.winGame();
+                                        }
+                                    } else {
+                                        // 非目标字符放回水中
+                                        caughtChar.element.style.bottom = (20 + Math.random() * 80) + 'px';
+                                        caughtChar.element.style.transform = 'translateX(-24px)';
+                                        caughtChar.x = -24;
+                                        caughtChar.hooked = false;
+                                        this.gameState.characters.push(caughtChar);
+                                        this.gameState.caughtCharacters.splice(i, 1);
+                                        this.updateUI();
+                                    }
+                                }
+                            }
+                        }
+
+                        requestAnimationFrame(retractLine);
+                    } else {
+                        // 收回完成
+                        this.fishingLine.style.display = 'none';
+                        this.gameState.isCasting = false;
+
+                        // 处理剩余被钩住的字符
+                        for (let i = this.gameState.caughtCharacters.length - 1; i >= 0; i--) {
+                            const caughtChar = this.gameState.caughtCharacters[i];
+                            if (caughtChar.hooked) {
+                                if (this.gameState.targetSequence.includes(caughtChar.char)) {
+                                    this.gameState.collectedLetters.add(caughtChar.char);
+                                    this.catchSound.currentTime = 0;
+                                    this.catchSound.play().catch(e => console.log("Audio play error:", e));
+                                    caughtChar.element.remove();
+                                    this.gameState.caughtCharacters.splice(i, 1);
+                                    this.updateUI();
+                                    
+                                    if (this.gameState.collectedLetters.size === this.gameState.targetSequence.length) {
+                                        this.winGame();
+                                    }
+                                } else {
+                                    caughtChar.element.style.bottom = (20 + Math.random() * 80) + 'px';
+                                    caughtChar.element.style.transform = 'translateX(-24px)';
+                                    caughtChar.x = -24;
+                                    caughtChar.hooked = false;
+                                    this.gameState.characters.push(caughtChar);
+                                    this.gameState.caughtCharacters.splice(i, 1);
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // 开始延长鱼线
+                extendLine();
+            }
+
+            updateUI() {
+                // 更新收集的字符显示
+                let collectedText = "Collected: ";
+                for (const char of this.gameState.targetSequence) {
+                    if (this.gameState.collectedLetters.has(char)) {
+                        collectedText += `<span style="color: #7CFC00;">${char}</span>`;
+                    } else {
+                        collectedText += `<span style="color: #FF0000;">${char}</span>`;
+                    }
+                }
+                this.collectedSequenceEl.innerHTML = collectedText;
+
+                // 更新倒计时
+                const remainingTime = 180 - this.gameState.gameTime;
+                const minutes = Math.floor(remainingTime / 60);
+                const seconds = remainingTime % 60;
+                this.countdownEl.textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+            }
+
+            winGame() {
+                this.gameState.gameRunning = false;
+                clearInterval(this.gameState.gameTimer);
+                this.winPopup.style.display = 'block';
+                this.winSound.currentTime = 0;
+                this.winSound.play().catch(e => console.log("Audio play error:", e));
+            }
+
+            resetGame() {
+                clearInterval(this.gameState.gameTimer);
+                this.initGame();
+            }
+
+            setupEventListeners() {
+                // 键盘控制
+                document.addEventListener('keydown', (e) => {
+                    if (!this.gameState.gameRunning) {
+                        if (e.key === 'r' || e.key === 'R') {
+                            this.resetGame();
+                        }
+                        return;
+                    }
+
+                    // 左右方向键移动角色
+                    if (e.key === 'ArrowLeft') {
+                        this.gameState.characterPosition = Math.max(30, this.gameState.characterPosition - this.gameState.characterSpeed);
+                        this.updateCharacterPosition();
+                    } else if (e.key === 'ArrowRight') {
+                        this.gameState.characterPosition = Math.min(560, this.gameState.characterPosition + this.gameState.characterSpeed);
+                        this.updateCharacterPosition();
+                    } else if (e.key === 'f' || e.key === 'F') {
+                        // F键钓鱼
+                        this.castFishingRod();
+                    }
+                });
+            }
+        }
+
+        // 初始化游戏
+        const game = new FishingGame();
+
+        // 暴露重置游戏函数给全局
+        window.resetGame = () => {
+            game.resetGame();
+        };
+    </script>
+</body>
+</html>
